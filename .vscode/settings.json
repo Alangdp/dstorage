@@ -1,0 +1,22 @@
+{
+	// Biome formats and fixes on save. Same rules as `bun run format` and CI (biome.json).
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.biome": "explicit",
+		"source.organizeImports.biome": "explicit"
+	},
+
+	// Biome does not handle Rust: rust-analyzer formats it with rustfmt (`cargo fmt`).
+	"[rust]": {
+		"editor.defaultFormatter": "rust-lang.rust-analyzer"
+	},
+
+	// Markdown and workflow YAML are not formatted by Biome; leave them as written.
+	"[markdown]": {
+		"editor.formatOnSave": false
+	},
+	"[yaml]": {
+		"editor.formatOnSave": false
+	}
+}

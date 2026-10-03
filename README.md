@@ -1,94 +1,102 @@
 # dstorage
 
-Um app de bandeja para mandar arquivos para a nuvem e compartilhar por link.
-Você arrasta o arquivo, ele sobe sozinho e o link de download já fica copiado
-na sua área de transferência. É só colar onde quiser.
+🇧🇷 [Leia em português](README.pt-BR.md)
 
-## O que ele faz
+A tray app for sending files to the cloud and sharing them by link. You drag a file in,
+it uploads on its own, and the download link is already copied to your clipboard. Just
+paste it wherever you want.
 
-- **Envio por arrastar e soltar.** Solte um ou vários arquivos na janela e o envio começa
-  na hora. Arquivos grandes são enviados em partes, então não travam o app.
-- **Link pronto para compartilhar.** Quando o envio termina, o link é copiado automaticamente.
-  Você pode copiá-lo de novo a qualquer momento pela lista de envios.
-- **Validade do link.** Em Configurações você escolhe por quantas horas os próximos links
-  valem (de 1 a 168 horas, ou seja, até 7 dias). O link nunca dura mais que o arquivo,
-  que o servidor apaga depois de um prazo fixo.
-- **Histórico.** Os arquivos enviados ficam na lista, com o estado de cada um (enviando,
-  concluído, com erro, cancelado). Dá para cancelar um envio em andamento.
-- **Fica na bandeja.** O app mora ao lado do relógio e não ocupa a barra de tarefas. Clique
-  no ícone para abrir ou esconder a janela. Esc ou o botão X também escondem. O app só
-  fecha de verdade pelo menu **Quit** do ícone.
-- **Envia em segundo plano.** Pode esconder a janela com envios em andamento. Quando
-  terminam (ou falham), o sistema mostra uma notificação.
-- **Progresso no ícone.** Durante um envio, o ícone da bandeja ganha uma pilha de 4 blocos
-  que vai enchendo conforme o progresso geral.
-- **Tema claro e escuro.** O botão de sol/lua no topo alterna entre os dois.
-- **Iniciar com o sistema.** Em Configurações dá para marcar para o dstorage abrir sozinho
-  quando o computador liga. Ele abre só na bandeja, sem mostrar a janela.
+## What it does
 
-## Diferenças entre os sistemas
+- **Drag and drop uploads.** Drop one or more files on the window and the upload starts
+  right away. Large files are sent in parts, so they never freeze the app.
+- **A link ready to share.** When the upload finishes, the link is copied automatically.
+  You can copy it again at any time from the upload list.
+- **Link validity.** In Settings you choose how many hours the next links stay valid
+  (1 to 168 hours, that is, up to 7 days). A link never outlives the file, which the
+  server deletes after a fixed period.
+- **History.** Uploaded files stay in the list with their state (uploading, done, failed,
+  canceled). You can cancel an upload that is in progress.
+- **Lives in the tray.** The app sits next to the clock and does not take up the taskbar.
+  Click the icon to show or hide the window. Esc or the X button also hide it. The app
+  only really quits through the icon's **Quit** menu.
+- **Uploads in the background.** You can hide the window while uploads are running. When
+  they finish (or fail), the system shows a notification.
+- **Progress on the icon.** While uploading, the tray icon gets a stack of 4 blocks that
+  fills up with the overall progress.
+- **Light and dark themes.** The sun/moon button at the top switches between them.
+- **English and Portuguese.** Pick the language in Settings, or leave it on "System" to
+  follow your computer.
+- **Start with the system.** In Settings you can have dstorage open on its own when the
+  computer starts. It opens in the tray only, without showing the window.
 
-O app funciona nos três sistemas, mas a bandeja se comporta de forma diferente em cada um.
+## Differences between systems
+
+The app works on all three systems, but the tray behaves differently on each.
 
 ### Windows
 
-É onde tudo funciona por completo.
+This is where everything works fully.
 
-- Clique no ícone da bandeja abre e fecha a janela; clique direito mostra o menu.
-- **Arrastar arquivos direto sobre o ícone** abre a janela para você soltar o arquivo.
-  Para isso o ícone precisa estar visível na bandeja. Se ele estiver escondido no menu de
-  ícones ocultos (a setinha), esse atalho fica desligado. Basta arrastar o ícone para a
-  área visível.
+- Clicking the tray icon shows and hides the window; right-click shows the menu.
+- **Dragging files straight onto the icon** opens the window so you can drop the file.
+  For this the icon must be visible in the tray. Windows 11 tends to hide new icons in
+  the arrow (^) menu: open it and drag the dstorage icon onto the bar, or turn it on in
+  *Settings → Personalization → Taskbar → Other system tray icons*. When hidden, the app
+  works normally; only the drag shortcut is turned off.
 
 ### macOS
 
-- O ícone fica na barra de menu, no topo da tela.
-- Clique abre e fecha a janela, e o menu tem **Open** e **Quit**.
-- Arrastar arquivo direto sobre o ícone ainda não foi testado no Mac. Se não funcionar,
-  abra a janela e solte o arquivo lá.
+- The icon sits in the menu bar at the top of the screen.
+- Clicking opens and closes the window, and the menu has **Open** and **Quit**.
+- Dragging a file straight onto the icon does not work on the Mac. Open the window and
+  drop the file there.
 
 ### Linux
 
-- O ícone da bandeja existe, mas **o Linux não avisa o app quando você clica nele**. Por isso
-  o menu (clique direito) tem a opção **Open** para abrir a janela, além de **Quit**.
-- **Arrastar sobre o ícone não funciona** no Linux. Abra a janela pelo menu e solte o arquivo nela.
-- Dependendo do ambiente de desktop, a bandeja pode exigir uma extensão (no GNOME, por exemplo,
-  é preciso a extensão de indicadores de aplicativos).
+- The tray icon exists, but **Linux does not tell the app when you click it**. That is why
+  the menu (right-click) has an **Open** option to show the window, besides **Quit**.
+- **Dragging onto the icon does not work** on Linux. Open the window from the menu and
+  drop the file there.
+- Depending on your desktop environment, the tray may need an extension (on GNOME, for
+  example, the app indicators extension).
 
-## Como ele funciona por trás
+## How it works behind the scenes
 
-O dstorage não guarda nada no seu computador além do histórico e das suas preferências.
-Os arquivos vão para um servidor próprio ([dstorage-server](../golang-serividor-dstorage)),
-que cuida do armazenamento na nuvem e gera os links. Sem o servidor rodando, o app não
-consegue enviar nada.
+dstorage stores nothing on your computer except the history and your preferences. Files go
+to your own server ([dstorage-server](../golang-serividor-dstorage)), which handles the
+cloud storage and generates the links. Without the server running, the app cannot upload
+anything.
 
-As configurações (validade do link, tema, iniciar com o sistema) valem só para este computador.
+Settings (link validity, theme, language, start with the system) apply to this computer only.
 
-## Instalação
+## Installing
 
-Baixe o instalador do seu sistema na página de
-[Releases](../../releases) e execute.
+Download the installer for your system from the [Releases](../../releases) page and run it.
 
-## Para quem vai mexer no código
+## For people working on the code
 
-Você precisa de [Bun](https://bun.sh), [Rust](https://rustup.rs) e das
-[dependências do Tauri](https://tauri.app/start/prerequisites/) para o seu sistema.
+You need [Bun](https://bun.sh), [Rust](https://rustup.rs) and the
+[Tauri prerequisites](https://tauri.app/start/prerequisites/) for your system.
 
 ```sh
-cp .env.example .env     # ajuste VITE_API_URL para o endereço do servidor
+cp .env.example .env     # set VITE_API_URL to the server's address
 bun install
-bun run tauri dev        # abre o app em modo desenvolvimento
-bun run tauri build      # gera os instaladores
+bun run tauri dev        # opens the app in development mode
+bun run tauri build      # builds the installers
 ```
 
-Antes de abrir um PR:
+Before opening a PR:
 
 ```sh
-bun run format           # formata e corrige o código (Biome)
+bun run format           # formats and fixes the code (Biome)
 cd src-tauri && cargo fmt
 ```
 
-O GitHub confere formatação, tipos e o build a cada PR. As versões saem sozinhas a partir
-das mensagens de commit no padrão `feat:`, `fix:` etc.: ao mergear na `main`, o
-[release-please](https://github.com/googleapis/release-please) abre um PR de release, e
-mergear esse PR publica a nova versão com os instaladores.
+Code conventions, translations and commit messages are described in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+GitHub checks formatting, types and the build on every PR. Versions are released
+automatically from commit messages in the `feat:`, `fix:`, etc. style: merging to `main`
+makes [release-please](https://github.com/googleapis/release-please) open a release PR,
+and merging that PR publishes the new version with the installers.

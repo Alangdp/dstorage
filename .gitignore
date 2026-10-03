@@ -10,12 +10,18 @@ lerna-debug.log*
 node_modules
 dist
 .env
+
+# Repowise: only its config is versioned. The index/cache is generated locally.
+.repowise/*
+!.repowise/config.yaml
+.claude/CLAUDE.md
 dist-ssr
 *.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 .DS_Store
 *.suo

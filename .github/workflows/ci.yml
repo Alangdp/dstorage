@@ -20,7 +20,7 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      # `biome ci` não escreve nada: falha se algo não estiver formatado ou tiver erro de lint.
+      # `biome ci` writes nothing: it fails if anything is unformatted or has a lint error.
       - name: Biome (format + lint)
         run: bun run lint
 
@@ -43,7 +43,7 @@ jobs:
   build:
     name: Build (${{ matrix.name }})
     needs: [frontend, rust]
-    # No merge na main quem compila é o release.yml (só quando há release).
+    # On merge to main, release.yml does the building (only when there is a release).
     if: github.event_name == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,12 +57,12 @@ jobs:
           - name: Linux
             os: ubuntu-22.04
     env:
-      # URL da API embutida no frontend no build. Defina em Settings > Variables.
+      # API URL baked into the frontend at build time. Set it in Settings > Variables.
       VITE_API_URL: ${{ vars.VITE_API_URL || 'http://localhost:3000' }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Dependências do Tauri (Linux)
+      - name: Tauri dependencies (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update

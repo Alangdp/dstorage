@@ -11,7 +11,8 @@
 			"!!**/dist",
 			"!!**/public",
 			"!!**/src-tauri/target",
-			"!!**/src-tauri/gen"
+			"!!**/src-tauri/gen",
+			"!!**/.vscode/extensions.json"
 		]
 	},
 	"formatter": {
@@ -21,7 +22,14 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"preset": "recommended"
+			"preset": "recommended",
+			"correctness": {
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error"
+			},
+			"style": {
+				"useBlockStatements": { "level": "error", "fix": "safe" }
+			}
 		}
 	},
 	"css": {

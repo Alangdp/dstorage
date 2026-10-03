@@ -1,8 +1,8 @@
 name: Release
 
-# Roda a cada merge na main. O release-please mantém aberto um PR "chore(main): release X.Y.Z"
-# (versão e changelog saem dos commits convencionais: feat:, fix:, ...). Mergear esse PR cria
-# a tag e a Release no GitHub; só então os instaladores são compilados e anexados a ela.
+# Runs on every merge to main. release-please keeps a "chore(main): release X.Y.Z" PR open
+# (version and changelog come from conventional commits: feat:, fix:, ...). Merging that PR
+# creates the tag and the GitHub Release; only then are the installers built and attached.
 on:
   push:
     branches: [main]
@@ -25,7 +25,7 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   build:
-    name: Instaladores (${{ matrix.name }})
+    name: Installers (${{ matrix.name }})
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ${{ matrix.os }}
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Dependências do Tauri (Linux)
+      - name: Tauri dependencies (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
@@ -61,7 +61,7 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      # Anexa os instaladores à Release que o release-please acabou de criar.
+      # Attaches the installers to the Release that release-please just created.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
