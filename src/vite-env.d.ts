@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-	/** URL base do backend que gera as URLs pré-assinadas do S3. */
+	/** Base URL of the backend that issues the presigned S3 URLs. */
 	readonly VITE_API_URL: string;
 }
 

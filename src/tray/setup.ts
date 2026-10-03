@@ -1,51 +1,59 @@
 import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
+import { subscribeToLanguage, t } from "@/i18n";
 import { openMainWindow, toggleMainWindow } from "./window";
 
 const TRAY_ID = "main-tray";
 
 let tray: TrayIcon | null = null;
 
-/** O tray criado por `setupTray`, ou null enquanto ele ainda não existe. */
+/** The tray created by {@link setupTray}, or null while it does not exist yet. */
 export function getTray() {
 	return tray;
 }
 
-export async function setupTray() {
-	// No dev, cada reload do webview deixaria um tray antigo com callbacks mortos.
-	await TrayIcon.removeById(TRAY_ID).catch(() => {});
-
-	// O item precisa ser criado com MenuItem.new (e não inline em Menu.new({ items })):
-	// no Tauri, itens inline têm o canal do `action` removido logo após a criação,
-	// e o clique chega ao Rust mas nunca ao JS.
-	const quit = await MenuItem.new({
-		id: "quit",
-		text: "Quit",
-		action: () => {
-			void exit(0);
-		},
-	});
-
-	// No Linux o tray não emite cliques, então o menu é o único caminho para abrir a janela.
+/**
+ * Builds the tray menu in the current language.
+ *
+ * Items must be created with `MenuItem.new` (not inline in `Menu.new({ items })`): in
+ * Tauri, inline items have their `action` channel dropped right after creation, so the
+ * click reaches Rust but never JS.
+ */
+async function buildMenu() {
+	// On Linux the tray emits no clicks, so the menu is the only way to open the window.
 	const open = await MenuItem.new({
 		id: "open",
-		text: "Open",
+		text: t("tray.open"),
 		action: () => {
 			void openMainWindow().catch(console.error);
 		},
 	});
 
-	const menu = await Menu.new({ items: [open, quit] });
+	const quit = await MenuItem.new({
+		id: "quit",
+		text: t("tray.quit"),
+		action: () => {
+			void exit(0);
+		},
+	});
+
+	return Menu.new({ items: [open, quit] });
+}
+
+/** Creates the tray icon and keeps its menu in sync with the app language. */
+export async function setupTray() {
+	// In dev, every webview reload would leave an old tray behind with dead callbacks.
+	await TrayIcon.removeById(TRAY_ID).catch(() => {});
 
 	tray = await TrayIcon.new({
 		id: TRAY_ID,
 		icon: (await defaultWindowIcon()) ?? undefined,
-		menu,
-		// Clique esquerdo alterna a janela; o menu fica no botão direito.
+		menu: await buildMenu(),
+		// Left click toggles the window; the menu stays on the right button.
 		showMenuOnLeftClick: false,
 		action: (event) => {
-			// Click dispara em Down e Up; só reage uma vez.
+			// Click fires on both Down and Up; react only once.
 			if (
 				event.type === "Click" &&
 				event.button === "Left" &&
@@ -54,5 +62,11 @@ export async function setupTray() {
 				void toggleMainWindow(event.rect).catch(console.error);
 			}
 		},
+	});
+
+	subscribeToLanguage(() => {
+		void buildMenu()
+			.then((menu) => tray?.setMenu(menu))
+			.catch(console.error);
 	});
 }

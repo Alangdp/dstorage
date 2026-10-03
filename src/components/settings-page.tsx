@@ -1,14 +1,22 @@
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
-import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
+	type LanguageSetting,
+	type MessageKey,
+	setLanguage,
+	useI18n,
+} from "@/i18n";
 import {
 	isValidLinkHours,
 	loadSettings,
@@ -17,23 +25,34 @@ import {
 	saveSettings,
 } from "@/lib/settings";
 
+const LANGUAGE_OPTIONS: Array<{ value: LanguageSetting; label: MessageKey }> = [
+	{ value: "system", label: "settings.languageSystem" },
+	{ value: "en", label: "settings.languageEn" },
+	{ value: "pt", label: "settings.languagePt" },
+];
+
 type SettingsPageProps = {
-	/** Volta para a tela principal sem salvar. */
+	/** Goes back to the main screen without saving. */
 	onBack: () => void;
-	/** Fecha a janela (esconde no tray). */
+	/** Closes the window (hides it in the tray). */
 	onClose: () => void;
 };
 
+/** Settings screen. Nothing is applied until the user presses Save. */
 export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
-	// Texto, para o usuário poder apagar e redigitar à vontade.
+	const { t } = useI18n();
+	// Kept as text so the user can erase and retype freely.
 	const [hours, setHours] = useState(() =>
 		String(loadSettings().linkExpiresHours),
+	);
+	const [language, setLanguageChoice] = useState<LanguageSetting>(
+		() => loadSettings().language,
 	);
 	const [autostart, setAutostart] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		// A fonte da verdade é o sistema operacional, não o localStorage.
+		// The source of truth is the operating system, not localStorage.
 		isEnabled()
 			.then(setAutostart)
 			.catch(() => setAutostart(false));
@@ -43,15 +62,22 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 		const value = Number(hours);
 		if (!isValidLinkHours(value)) {
 			setError(
-				`Informe um número inteiro de ${MIN_LINK_EXPIRES_HOURS} a ${MAX_LINK_EXPIRES_HOURS} horas.`,
+				t("settings.errorHours", {
+					min: MIN_LINK_EXPIRES_HOURS,
+					max: MAX_LINK_EXPIRES_HOURS,
+				}),
 			);
 			return;
 		}
 
 		try {
-			saveSettings({ ...loadSettings(), linkExpiresHours: value });
+			saveSettings({
+				...loadSettings(),
+				linkExpiresHours: value,
+				language,
+			});
 		} catch {
-			setError("Não foi possível salvar as configurações neste computador.");
+			setError(t("settings.errorSave"));
 			return;
 		}
 
@@ -59,87 +85,80 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 			if (autostart !== (await isEnabled())) {
 				await (autostart ? enable() : disable());
 			}
-			onBack();
 		} catch {
-			setError("Não foi possível alterar a inicialização com o sistema.");
+			setError(t("settings.errorAutostart"));
+			return;
 		}
+
+		setLanguage(language);
+		onBack();
 	}
 
 	return (
-		<div className="flex h-screen flex-col bg-background text-foreground">
-			<header className="flex h-12 shrink-0 items-center justify-between border-b px-4">
-				<div className="flex items-center gap-2">
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								aria-label="Voltar"
-								onClick={onBack}
-							>
-								<ArrowLeft />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Voltar</TooltipContent>
-					</Tooltip>
-					<h1 className="text-sm font-semibold">Configurações</h1>
-				</div>
-
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							variant="ghost"
-							size="icon"
-							aria-label="Close"
-							onClick={onClose}
-						>
-							<X />
+		<PageLayout
+			title={t("settings.title")}
+			onBack={onBack}
+			onClose={onClose}
+			className="gap-6"
+			footer={
+				<>
+					{error && <p className="text-sm text-destructive">{error}</p>}
+					<div className="flex justify-end gap-2">
+						<Button variant="outline" onClick={onBack}>
+							{t("common.cancel")}
 						</Button>
-					</TooltipTrigger>
-					<TooltipContent>Close</TooltipContent>
-				</Tooltip>
-			</header>
-
-			<main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4">
-				<section className="flex flex-col gap-1.5">
-					<Label htmlFor="link-hours">Validade do link (horas)</Label>
-					<Input
-						id="link-hours"
-						type="number"
-						inputMode="numeric"
-						min={MIN_LINK_EXPIRES_HOURS}
-						max={MAX_LINK_EXPIRES_HOURS}
-						value={hours}
-						onChange={(e) => setHours(e.target.value)}
-					/>
-				</section>
-
-				<section className="flex items-start gap-2">
-					<input
-						id="autostart"
-						type="checkbox"
-						className="mt-0.5 size-4 accent-primary"
-						checked={autostart}
-						onChange={(e) => setAutostart(e.target.checked)}
-					/>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="autostart">Iniciar com o sistema</Label>
-						<p className="text-xs text-muted-foreground">
-							Abre o dstorage ao ligar o computador, somente na bandeja.
-						</p>
+						<Button onClick={handleSave}>{t("common.save")}</Button>
 					</div>
-				</section>
-			</main>
+				</>
+			}
+		>
+			<section className="flex flex-col gap-1.5">
+				<Label htmlFor="link-hours">{t("settings.linkHours")}</Label>
+				<Input
+					id="link-hours"
+					type="number"
+					inputMode="numeric"
+					min={MIN_LINK_EXPIRES_HOURS}
+					max={MAX_LINK_EXPIRES_HOURS}
+					value={hours}
+					onChange={(e) => setHours(e.target.value)}
+				/>
+			</section>
 
-			<footer className="flex shrink-0 flex-col gap-2 border-t p-4">
-				{error && <p className="text-sm text-destructive">{error}</p>}
-				<div className="flex justify-end gap-2">
-					<Button variant="outline" onClick={onBack}>
-						Cancelar
-					</Button>
-					<Button onClick={handleSave}>Salvar</Button>
+			<section className="flex flex-col gap-1.5">
+				<Label htmlFor="language">{t("settings.language")}</Label>
+				<Select
+					value={language}
+					onValueChange={(value) => setLanguageChoice(value as LanguageSetting)}
+				>
+					<SelectTrigger id="language" className="w-full">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{LANGUAGE_OPTIONS.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{t(option.label)}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</section>
+
+			<section className="flex items-start gap-2">
+				<input
+					id="autostart"
+					type="checkbox"
+					className="mt-0.5 size-4 accent-primary"
+					checked={autostart}
+					onChange={(e) => setAutostart(e.target.checked)}
+				/>
+				<div className="flex flex-col gap-1">
+					<Label htmlFor="autostart">{t("settings.autostart")}</Label>
+					<p className="text-xs text-muted-foreground">
+						{t("settings.autostartHint")}
+					</p>
 				</div>
-			</footer>
-		</div>
+			</section>
+		</PageLayout>
 	);
 }

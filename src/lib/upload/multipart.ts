@@ -1,4 +1,5 @@
 import axios, { type AxiosResponse } from "axios";
+import { t } from "@/i18n";
 import {
 	abortUpload,
 	type CompletedPart,
@@ -7,13 +8,16 @@ import {
 	startUpload,
 } from "./api";
 
-const MIN_PART_SIZE = 8 * 1024 * 1024; // o S3 exige no mínimo 5 MiB (exceto a última)
-const MAX_PARTS = 10_000; // limite do S3
+const MIN_PART_SIZE = 8 * 1024 * 1024; // S3 requires at least 5 MiB (except the last part)
+const MAX_PARTS = 10_000; // S3 limit
 const PART_CONCURRENCY = 3;
 const PART_RETRIES = 3;
 
+/** Options for {@link uploadFile}. */
 type UploadOptions = {
+	/** Aborting it cancels the upload and cleans up the parts already sent. */
 	signal: AbortSignal;
+	/** Called as bytes are sent; `loaded` is the running total across all parts. */
 	onProgress: (loaded: number, total: number) => void;
 };
 
@@ -21,7 +25,11 @@ function partSizeFor(fileSize: number) {
 	return Math.max(MIN_PART_SIZE, Math.ceil(fileSize / MAX_PARTS));
 }
 
-// O corpo é um Blob fatiado (`File.slice`), que o navegador lê do disco sob demanda.
+/**
+ * PUTs one part to its presigned URL.
+ * The body is a sliced Blob (`File.slice`), which the browser reads from disk on demand.
+ * @returns The part's ETag.
+ */
 async function putPart(
 	url: string,
 	body: Blob,
@@ -30,37 +38,36 @@ async function putPart(
 ): Promise<string> {
 	let response: AxiosResponse;
 	try {
-		// axios puro (sem baseURL do backend): a URL pré-assinada já é completa.
+		// Plain axios (no backend baseURL): the presigned URL is already complete.
 		response = await axios.put(url, body, {
 			signal,
 			headers: { "Content-Type": "application/octet-stream" },
 			onUploadProgress: (event) => onProgress(event.loaded),
 		});
 	} catch (error) {
-		// Sem `response`, o navegador bloqueou a requisição, quase sempre por CORS.
+		// Without a `response` the browser blocked the request, almost always because of CORS.
 		if (
 			axios.isAxiosError(error) &&
 			!axios.isCancel(error) &&
 			!error.response
 		) {
-			throw new Error(
-				"Falha de rede ao enviar parte ao S3 (confira o CORS e a região do bucket)",
-			);
+			throw new Error(t("error.partNetwork"));
 		}
 		throw error;
 	}
 
-	// Exige `ExposeHeaders: ETag` no CORS do bucket.
+	// Requires `ExposeHeaders: ETag` in the bucket CORS.
 	const etag = response.headers.etag;
 	if (typeof etag !== "string" || etag === "") {
-		throw new Error("S3 não devolveu ETag (veja o CORS do bucket)");
+		throw new Error(t("error.noEtag"));
 	}
 	return etag;
 }
 
 /**
- * Envia um arquivo ao S3 em partes (multipart), no máximo `PART_CONCURRENCY`
- * ao mesmo tempo, então só algumas partes ficam em memória por vez.
+ * Uploads a file to S3 in parts (multipart), at most `PART_CONCURRENCY` at a time,
+ * so only a few parts are in memory at once.
+ * @returns The object key on S3.
  */
 export async function uploadFile(file: File, options: UploadOptions) {
 	const { signal, onProgress } = options;
@@ -71,7 +78,7 @@ export async function uploadFile(file: File, options: UploadOptions) {
 		size: file.size,
 	});
 
-	// Aborta as partes em voo se uma delas falhar de vez.
+	// Aborts the in-flight parts if one of them fails for good.
 	const inner = new AbortController();
 	const forward = () => inner.abort(signal.reason);
 	signal.addEventListener("abort", forward, { once: true });
@@ -94,7 +101,7 @@ export async function uploadFile(file: File, options: UploadOptions) {
 
 			for (let attempt = 1; ; attempt++) {
 				try {
-					// A URL é pedida a cada tentativa: pré-assinadas expiram.
+					// The URL is requested on every attempt: presigned URLs expire.
 					const url = await getPartUrl(key, uploadId, index + 1);
 					const etag = await putPart(url, blob, inner.signal, (loaded) => {
 						loadedByPart[index] = loaded;
@@ -105,7 +112,9 @@ export async function uploadFile(file: File, options: UploadOptions) {
 					return { PartNumber: index + 1, ETag: etag };
 				} catch (error) {
 					loadedByPart[index] = 0;
-					if (inner.signal.aborted || attempt >= PART_RETRIES) throw error;
+					if (inner.signal.aborted || attempt >= PART_RETRIES) {
+						throw error;
+					}
 				}
 			}
 		};

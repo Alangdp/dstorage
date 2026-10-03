@@ -1,7 +1,9 @@
 import { defaultWindowIcon } from "@tauri-apps/api/app";
 import { Image } from "@tauri-apps/api/image";
+import { t } from "@/i18n";
 import { getTray } from "./setup";
 
+/** How many blocks the progress stack beside the tray icon has. */
 export const TRAY_SEGMENTS = 4;
 
 const SIZE = 32;
@@ -15,9 +17,12 @@ const SEGMENT_GAP = 2;
 const FILLED = "#22c55e";
 const EMPTY = "rgba(148, 163, 184, 0.45)";
 
+/** Draws the app icon with a stack of `TRAY_SEGMENTS` blocks, `filled` of them lit. */
 async function drawIcon(filled: number) {
 	const base = await defaultWindowIcon();
-	if (!base) return null;
+	if (!base) {
+		return null;
+	}
 
 	const [rgba, { width, height }] = await Promise.all([
 		base.rgba(),
@@ -33,7 +38,9 @@ async function drawIcon(filled: number) {
 	canvas.width = SIZE;
 	canvas.height = SIZE;
 	const ctx = canvas.getContext("2d");
-	if (!sourceCtx || !ctx) return null;
+	if (!sourceCtx || !ctx) {
+		return null;
+	}
 
 	sourceCtx.putImageData(
 		new ImageData(new Uint8ClampedArray(rgba), width, height),
@@ -42,7 +49,7 @@ async function drawIcon(filled: number) {
 	);
 	ctx.drawImage(source, 0, (SIZE - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
 
-	// Pilha de 4 blocos ao lado do ícone, enchendo de baixo para cima.
+	// Stack of blocks beside the icon, filling from the bottom up.
 	for (let i = 0; i < TRAY_SEGMENTS; i++) {
 		const fromBottom = TRAY_SEGMENTS - 1 - i;
 		ctx.fillStyle = fromBottom < filled ? FILLED : EMPTY;
@@ -59,21 +66,27 @@ async function drawIcon(filled: number) {
 }
 
 /**
- * Mostra no ícone da bandeja quantos dos 4 blocos já estão cheios.
- * `null` volta ao ícone padrão (nada sendo enviado).
+ * Shows on the tray icon how many of the 4 blocks are filled.
+ * @param filled Blocks to light, or `null` to restore the default icon (nothing uploading).
  */
 export async function setTrayProgress(filled: number | null) {
 	const tray = getTray();
-	if (!tray) return;
+	if (!tray) {
+		return;
+	}
 
 	if (filled === null) {
 		const icon = await defaultWindowIcon();
-		if (icon) await tray.setIcon(icon);
+		if (icon) {
+			await tray.setIcon(icon);
+		}
 		await tray.setTooltip("dstorage");
 		return;
 	}
 
 	const icon = await drawIcon(filled);
-	if (icon) await tray.setIcon(icon);
-	await tray.setTooltip(`dstorage — enviando (${filled}/${TRAY_SEGMENTS})`);
+	if (icon) {
+		await tray.setIcon(icon);
+	}
+	await tray.setTooltip(t("tray.uploading", { filled, total: TRAY_SEGMENTS }));
 }

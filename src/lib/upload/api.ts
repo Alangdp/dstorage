@@ -1,12 +1,14 @@
 import axios from "axios";
+import { t } from "@/i18n";
 import { api, post, toError } from "@/lib/http";
 
-// Contrato com o backend que fala com o S3. O app nunca vê credenciais da AWS:
-// o backend cria o multipart upload e devolve uma URL pré-assinada por parte.
+// Contract with the backend that talks to S3. The app never sees AWS credentials:
+// the backend creates the multipart upload and returns one presigned URL per part.
 
+/** A part already uploaded, as S3 expects it in CompleteMultipartUpload. */
 export type CompletedPart = { PartNumber: number; ETag: string };
 
-/** CreateMultipartUpload no backend. */
+/** CreateMultipartUpload on the backend. */
 export function startUpload(file: {
 	name: string;
 	type: string;
@@ -15,7 +17,7 @@ export function startUpload(file: {
 	return post<{ key: string; uploadId: string }>("/uploads/start", file);
 }
 
-/** URL pré-assinada (PUT) de UploadPart para uma parte. */
+/** Presigned UploadPart (PUT) URL for one part. */
 export async function getPartUrl(
 	key: string,
 	uploadId: string,
@@ -29,7 +31,7 @@ export async function getPartUrl(
 	return url;
 }
 
-/** CompleteMultipartUpload no backend. */
+/** CompleteMultipartUpload on the backend. */
 export function completeUpload(
 	key: string,
 	uploadId: string,
@@ -38,29 +40,30 @@ export function completeUpload(
 	return post<{ key: string }>("/uploads/complete", { key, uploadId, parts });
 }
 
-/** AbortMultipartUpload no backend, para não deixar partes órfãs cobrando no S3. */
+/** AbortMultipartUpload on the backend, so orphaned parts are not billed by S3. */
 export function abortUpload(key: string, uploadId: string) {
 	return post<unknown>("/uploads/abort", { key, uploadId });
 }
 
+/** A presigned link to download an uploaded file. */
 export type DownloadLink = {
 	url: string;
-	/** Quando o link deixa de funcionar (ms desde a época). */
+	/** When the link stops working (ms since the epoch). */
 	linkExpiresAt: number;
-	/** Quando o servidor deve apagar o arquivo (retenção fixa do servidor). */
+	/** When the server is due to delete the file (the server's fixed retention). */
 	fileExpiresAt: number;
 };
 
-/** O arquivo não existe mais no S3 (ex.: apagado pela regra de retenção). */
+/** The file no longer exists on S3 (for example, deleted by the retention rule). */
 export class FileGoneError extends Error {
 	constructor() {
-		super("O arquivo não existe mais no S3");
+		super(t("error.fileGone"));
 	}
 }
 
 /**
- * Link pré-assinado (GET) para baixar/compartilhar o arquivo já enviado.
- * Falha com `FileGoneError` se o arquivo saiu do prazo de retenção do servidor.
+ * Presigned (GET) link to download/share an uploaded file.
+ * @throws {FileGoneError} When the file is past the server's retention period.
  */
 export async function getDownloadLink(
 	key: string,

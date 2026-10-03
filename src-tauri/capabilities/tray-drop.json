@@ -3,5 +3,5 @@
 	"identifier": "tray-drop",
 	"description": "Capability for the invisible window over the tray icon",
 	"windows": ["tray-drop"],
-	"permissions": ["core:default", "core:app:allow-exit"]
+	"permissions": ["core:default"]
 }

@@ -6,21 +6,26 @@ import {
 	type PhysicalSize,
 } from "@tauri-apps/api/window";
 
-import { TRAY_DRAG_ENTER, TRAY_TOGGLE } from "./events";
+import { TRAY_DRAG_ENTER } from "./events";
 
+/** Position and size of the tray icon on screen, in physical pixels. */
 export type TrayRect = { position: PhysicalPosition; size: PhysicalSize };
 
 const TRAY_WINDOW_GAP = 8;
 
-// Encosta a janela no ícone do tray: acima se a barra de tarefas está embaixo,
-// abaixo se está em cima. Tudo em pixels físicos, limitado à área de trabalho.
+/**
+ * Snaps the window to the tray icon: above it when the taskbar is at the bottom, below
+ * when it is at the top. Everything in physical pixels, clamped to the work area.
+ */
 async function positionNearTray(rect: TrayRect) {
 	const win = getCurrentWindow();
 	const iconCenterX = rect.position.x + rect.size.width / 2;
 	const iconCenterY = rect.position.y + rect.size.height / 2;
 
 	const monitor = await monitorFromPoint(iconCenterX, iconCenterY);
-	if (!monitor) return;
+	if (!monitor) {
+		return;
+	}
 
 	const { position: wa, size: ws } = monitor.workArea;
 	const { width, height } = await win.outerSize();
@@ -43,8 +48,11 @@ async function positionNearTray(rect: TrayRect) {
 	);
 }
 
-// Clique no tray tira o foco da janela, então `isFocused` não serve para decidir:
-// visível e não minimizada => esconde; senão => mostra e foca.
+/**
+ * Hides the main window if it is showing, otherwise shows it next to the tray icon.
+ * A tray click takes focus away from the window, so `isFocused` cannot decide this:
+ * visible and not minimized => hide; anything else => show and focus.
+ */
 export async function toggleMainWindow(rect: TrayRect) {
 	const win = getCurrentWindow();
 	const [visible, minimized] = await Promise.all([
@@ -60,7 +68,7 @@ export async function toggleMainWindow(rect: TrayRect) {
 	await showMainWindow(rect);
 }
 
-/** Abre a janela onde ela estiver, sem posicionar (não há retângulo do tray, como no Linux). */
+/** Opens the window wherever it is, without positioning it (there is no tray rectangle, as on Linux). */
 export async function openMainWindow() {
 	const win = getCurrentWindow();
 	await win.show();
@@ -69,29 +77,24 @@ export async function openMainWindow() {
 }
 
 async function showMainWindow(rect: TrayRect) {
-	const win = getCurrentWindow();
 	await positionNearTray(rect);
-	await win.show();
-	await win.unminimize();
-	await win.setFocus();
+	await openMainWindow();
 }
 
-// A janela transparente sobre o ícone avisa dos cliques e de arquivos arrastados até ele.
+/** Opens the window when the transparent window over the tray icon reports a file dragged onto it. */
 export async function setupTrayDropEvents() {
-	await listen<TrayRect>(TRAY_TOGGLE, (event) => {
-		void toggleMainWindow(event.payload).catch(console.error);
-	});
-
 	await listen<TrayRect>(TRAY_DRAG_ENTER, async (event) => {
 		const win = getCurrentWindow();
-		if (await win.isVisible()) return;
-		// Sem setFocus: o foco roubado cancelaria o arrasto em andamento.
+		if (await win.isVisible()) {
+			return;
+		}
+		// No setFocus: stealing focus would cancel the drag in progress.
 		await positionNearTray(event.payload);
 		await win.show();
 	});
 }
 
-// Botão de fechar esconde a janela no tray; o app só encerra pelo "Quit".
+/** The close button hides the window in the tray; the app only quits through "Quit". */
 export async function setupCloseToTray() {
 	await getCurrentWindow().onCloseRequested(async (event) => {
 		event.preventDefault();

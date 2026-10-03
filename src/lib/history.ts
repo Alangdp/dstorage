@@ -1,14 +1,16 @@
 import type { UploadItem } from "@/hooks/use-uploads";
+import { t } from "@/i18n";
 
-// Histórico guardado no localStorage do webview (fica no perfil do app).
+// History kept in the webview's localStorage (it lives in the app profile).
 const STORAGE_KEY = "dstorage.history.v1";
 const MAX_ITEMS = 200;
 
-/** Envios que ainda estavam em andamento não sobrevivem ao fechamento do app. */
+/** Uploads that were still running do not survive the app being closed. */
 function isInFlight(item: UploadItem) {
 	return item.status === "queued" || item.status === "uploading";
 }
 
+/** Reads the saved history, marking interrupted uploads as failed. */
 export function loadHistory(): UploadItem[] {
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
@@ -16,11 +18,7 @@ export function loadHistory(): UploadItem[] {
 
 		return items.map((item) =>
 			isInFlight(item)
-				? {
-						...item,
-						status: "error",
-						error: "Envio interrompido ao fechar o app",
-					}
+				? { ...item, status: "error", error: t("error.interrupted") }
 				: { ...item, copied: false },
 		);
 	} catch {
@@ -28,11 +26,11 @@ export function loadHistory(): UploadItem[] {
 	}
 }
 
-/** Guarda tudo que terminou (enviado, com erro ou cancelado) e o que ficou pendente. */
+/** Saves everything that finished (uploaded, failed or canceled) and what is still pending. */
 export function saveHistory(items: UploadItem[]) {
 	try {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(-MAX_ITEMS)));
 	} catch {
-		// localStorage indisponível ou cheio: o histórico simplesmente não persiste.
+		// localStorage unavailable or full: the history simply does not persist.
 	}
 }

@@ -5,7 +5,10 @@ import {
 	sendNotification,
 } from "@tauri-apps/plugin-notification";
 
-/** Avisa pelo sistema, mas só se o usuário não estiver olhando a janela. */
+/**
+ * Shows a system notification, but only when the user is not looking at the window.
+ * Failures are logged and swallowed: a missing notification must never break an upload.
+ */
 export async function notifyIfHidden(title: string, body: string) {
 	try {
 		const win = getCurrentWindow();
@@ -13,13 +16,17 @@ export async function notifyIfHidden(title: string, body: string) {
 			win.isVisible(),
 			win.isMinimized(),
 		]);
-		if (visible && !minimized) return;
+		if (visible && !minimized) {
+			return;
+		}
 
 		const granted =
 			(await isPermissionGranted()) ||
 			(await requestPermission()) === "granted";
-		if (granted) sendNotification({ title, body });
+		if (granted) {
+			sendNotification({ title, body });
+		}
 	} catch (error) {
-		console.error("Falha ao enviar a notificação", error);
+		console.error("Failed to send the notification", error);
 	}
 }

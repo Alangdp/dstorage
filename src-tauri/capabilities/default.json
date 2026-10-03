@@ -21,6 +21,7 @@
 		"autostart:allow-disable",
 		"autostart:allow-is-enabled",
 		"core:tray:allow-set-icon",
+		"core:tray:allow-set-menu",
 		"core:tray:allow-set-tooltip",
 		"notification:default"
 	]

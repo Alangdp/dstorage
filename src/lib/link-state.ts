@@ -1,12 +1,17 @@
 import type { UploadItem } from "@/hooks/use-uploads";
+import { getLocale } from "@/i18n";
 
+/** What can be done with an uploaded file's share link. */
 export type LinkState =
-	| "valid" // dá para baixar agora
-	| "link-expired" // o link venceu, mas o arquivo ainda existe e dá para gerar outro
-	| "file-deleted"; // o arquivo saiu do S3
+	| "valid" // can be downloaded right now
+	| "link-expired" // the link expired, but the file still exists so a new one can be made
+	| "file-deleted"; // the file is gone from S3
 
+/** Works out the state of an item's link at the instant `now` (ms since the epoch). */
 export function getLinkState(item: UploadItem, now: number): LinkState {
-	if (item.deleted) return "file-deleted";
+	if (item.deleted) {
+		return "file-deleted";
+	}
 	if (item.fileExpiresAt !== undefined && now >= item.fileExpiresAt) {
 		return "file-deleted";
 	}
@@ -16,13 +21,12 @@ export function getLinkState(item: UploadItem, now: number): LinkState {
 	return "valid";
 }
 
-const formatter = new Intl.DateTimeFormat("pt-BR", {
-	day: "2-digit",
-	month: "2-digit",
-	hour: "2-digit",
-	minute: "2-digit",
-});
-
+/** Formats a timestamp as a short day/month and time, in the current language. */
 export function formatDateTime(timestamp: number) {
-	return formatter.format(timestamp);
+	return new Intl.DateTimeFormat(getLocale(), {
+		day: "2-digit",
+		month: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+	}).format(timestamp);
 }

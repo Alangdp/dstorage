@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { t } from "@/i18n";
 import { copyToClipboard } from "@/lib/clipboard";
 import { loadHistory, saveHistory } from "@/lib/history";
 import { getLinkState } from "@/lib/link-state";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/upload/api";
 import { uploadFile } from "@/lib/upload/multipart";
 
+/** Where an upload is in its life cycle. */
 export type UploadStatus =
 	| "queued"
 	| "uploading"
@@ -18,28 +20,29 @@ export type UploadStatus =
 	| "error"
 	| "canceled";
 
+/** One file in the upload queue/history. */
 export type UploadItem = {
 	id: string;
 	name: string;
 	size: number;
-	/** 0 a 100 */
+	/** 0 to 100 */
 	progress: number;
 	status: UploadStatus;
 	error?: string;
 
-	/** Chave do objeto no S3, disponível depois do envio. */
+	/** The object's key on S3, available after the upload. */
 	key?: string;
-	/** Quando o item entrou na fila. */
+	/** When the item entered the queue. */
 	createdAt?: number;
 	uploadedAt?: number;
-	/** Último link pré-assinado gerado. */
+	/** The latest presigned link generated. */
 	url?: string;
 	linkExpiresAt?: number;
-	/** Quando o S3 deve apagar o arquivo (se a retenção estiver ligada). */
+	/** When S3 is due to delete the file (if retention is on). */
 	fileExpiresAt?: number;
-	/** O S3 confirmou que o arquivo não existe mais. */
+	/** S3 confirmed the file no longer exists. */
 	deleted?: boolean;
-	/** O link está na área de transferência. */
+	/** The link is on the clipboard. */
 	copied?: boolean;
 };
 
@@ -53,22 +56,25 @@ function linkFields(link: DownloadLink): Partial<UploadItem> {
 	};
 }
 
-/** Fila de uploads (começa sozinha) + histórico dos enviados. */
+/**
+ * Upload queue (starts on its own) plus the history of finished uploads.
+ * @returns The items and the actions to add files, cancel, copy a link and remove an item.
+ */
 export function useUploads() {
 	const [items, setItems] = useState<UploadItem[]>(loadHistory);
 	const controllers = useRef(new Map<string, AbortController>());
 	const queue = useRef<Array<() => Promise<void>>>([]);
 	const running = useRef(0);
 
-	// Persiste só quando algo do histórico muda, não a cada tick de progresso.
-	// A assinatura usa o status (não o progresso), que muda poucas vezes por item.
+	// Persist only when something in the history changes, not on every progress tick.
+	// The signature uses the status (not the progress), which changes few times per item.
 	const historySignature = items
 		.map(
 			(item) =>
 				`${item.id}:${item.status}:${item.url}:${item.linkExpiresAt}:${item.deleted}`,
 		)
 		.join("|");
-	// biome-ignore lint/correctness/useExhaustiveDependencies: a assinatura representa `items`
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the signature stands for `items`
 	useEffect(() => {
 		saveHistory(items);
 	}, [historySignature]);
@@ -79,7 +85,7 @@ export function useUploads() {
 		);
 	}, []);
 
-	/** Pede um link novo ao backend e copia. Marca o item como apagado se o S3 não tem mais o arquivo. */
+	/** Asks the backend for a new link and copies it. Marks the item deleted if S3 no longer has the file. */
 	const refreshLink = useCallback(
 		async (id: string, key: string) => {
 			try {
@@ -95,7 +101,7 @@ export function useUploads() {
 				if (error instanceof FileGoneError) {
 					patch(id, { deleted: true, copied: false });
 				} else {
-					console.error("Falha ao gerar o link de download", error);
+					console.error("Failed to generate the download link", error);
 				}
 			}
 		},
@@ -105,7 +111,9 @@ export function useUploads() {
 	const pump = useCallback(() => {
 		while (running.current < FILE_CONCURRENCY && queue.current.length > 0) {
 			const job = queue.current.shift();
-			if (!job) break;
+			if (!job) {
+				break;
+			}
 			running.current++;
 			void job().finally(() => {
 				running.current--;
@@ -134,7 +142,9 @@ export function useUploads() {
 				]);
 
 				queue.current.push(async () => {
-					if (controller.signal.aborted) return;
+					if (controller.signal.aborted) {
+						return;
+					}
 					patch(id, { status: "uploading" });
 					try {
 						const key = await uploadFile(file, {
@@ -151,18 +161,20 @@ export function useUploads() {
 							uploadedAt: Date.now(),
 						});
 
-						// O upload já deu certo: falhar em gerar o link não vira erro do arquivo.
+						// The upload already succeeded: failing to generate the link is not a file error.
 						await refreshLink(id, key);
-						void notifyIfHidden("Upload concluído", file.name);
+						void notifyIfHidden(t("notify.uploadDone"), file.name);
 					} catch (error) {
-						if (controller.signal.aborted) return;
+						if (controller.signal.aborted) {
+							return;
+						}
 						const message =
 							error instanceof Error ? error.message : String(error);
-						void notifyIfHidden("Falha no upload", `${file.name}: ${message}`);
-						patch(id, {
-							status: "error",
-							error: message,
-						});
+						void notifyIfHidden(
+							t("notify.uploadFailed"),
+							`${file.name}: ${message}`,
+						);
+						patch(id, { status: "error", error: message });
 					} finally {
 						controllers.current.delete(id);
 					}
@@ -181,14 +193,18 @@ export function useUploads() {
 		[patch],
 	);
 
-	/** Copia o link; se já venceu, gera outro antes (enquanto o arquivo existir). */
+	/** Copies the link; if it has expired, generates another first (while the file exists). */
 	const copyLink = useCallback(
 		async (id: string) => {
 			const item = items.find((candidate) => candidate.id === id);
-			if (!item?.key) return;
+			if (!item?.key) {
+				return;
+			}
 
 			const state = getLinkState(item, Date.now());
-			if (state === "file-deleted") return;
+			if (state === "file-deleted") {
+				return;
+			}
 
 			if (state === "valid" && item.url) {
 				patch(id, { copied: await copyToClipboard(item.url) });

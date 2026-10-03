@@ -1,0 +1,140 @@
+/**
+ * English catalog. It is the source of truth: every other language must define
+ * exactly the same keys (enforced by the {@link Messages} type).
+ *
+ * Placeholders use `{name}` and are filled in by `t(key, { name })`.
+ */
+export const en = {
+	"common.back": "Back",
+	"common.cancel": "Cancel",
+	"common.save": "Save",
+	"common.close": "Close",
+
+	"header.themeLight": "Light theme",
+	"header.themeDark": "Dark theme",
+	"header.settings": "Settings",
+
+	"dropzone.title": "Drop files here",
+	"dropzone.hint": "Upload starts automatically",
+
+	"settings.title": "Settings",
+	"settings.linkHours": "Link validity (hours)",
+	"settings.language": "Language",
+	"settings.languageSystem": "System",
+	"settings.languageEn": "English",
+	"settings.languagePt": "Português",
+	"settings.autostart": "Start with the system",
+	"settings.autostartHint":
+		"Opens dstorage when the computer starts, in the tray only.",
+	"settings.errorHours": "Enter a whole number from {min} to {max} hours.",
+	"settings.errorSave": "Could not save the settings on this computer.",
+	"settings.errorAutostart": "Could not change the start-with-system option.",
+
+	"list.filterAll": "All",
+	"list.filterActive": "Active",
+	"list.filterExpired": "Expired",
+	"list.filterFailed": "Failed",
+	"list.empty": "No items in this tab.",
+	"list.queued": "Queued",
+	"list.canceled": "Canceled",
+	"list.errorFallback": "Upload failed",
+	"list.generatingLink": "Uploaded · generating link...",
+	"list.fileDeleted": "File removed from S3",
+	"list.linkExpired": "Link expired",
+	"list.linkValidUntil": "Link valid until {date}",
+	"list.copied": "copied",
+	"list.fileDeletedAt": "file deleted ~{date}",
+	"list.actionRegenerate": "Generate a new link and copy",
+	"list.actionCopied": "Link copied",
+	"list.actionCopy": "Copy link",
+	"list.actionCancel": "Cancel {name}",
+	"list.actionRemove": "Remove from history",
+
+	"history.title": "History",
+	"history.viewAll": "View full history ({count})",
+
+	"notify.uploadDone": "Upload complete",
+	"notify.uploadFailed": "Upload failed",
+
+	"tray.open": "Open",
+	"tray.quit": "Quit",
+	"tray.uploading": "dstorage — uploading ({filled}/{total})",
+
+	"error.partNetwork":
+		"Network failure while sending a part to S3 (check the bucket CORS and region)",
+	"error.noEtag": "S3 did not return an ETag (check the bucket CORS)",
+	"error.fileGone": "The file no longer exists on S3",
+	"error.interrupted": "Upload interrupted when the app was closed",
+} as const;
+
+/** Every translatable string key. */
+export type MessageKey = keyof typeof en;
+
+/** A full catalog for one language. */
+export type Messages = Record<MessageKey, string>;
+
+/** Portuguese (Brazil) catalog. */
+export const pt: Messages = {
+	"common.back": "Voltar",
+	"common.cancel": "Cancelar",
+	"common.save": "Salvar",
+	"common.close": "Fechar",
+
+	"header.themeLight": "Tema claro",
+	"header.themeDark": "Tema escuro",
+	"header.settings": "Configurações",
+
+	"dropzone.title": "Arraste arquivos aqui",
+	"dropzone.hint": "O envio começa automaticamente",
+
+	"settings.title": "Configurações",
+	"settings.linkHours": "Validade do link (horas)",
+	"settings.language": "Idioma",
+	"settings.languageSystem": "Sistema",
+	"settings.languageEn": "English",
+	"settings.languagePt": "Português",
+	"settings.autostart": "Iniciar com o sistema",
+	"settings.autostartHint":
+		"Abre o dstorage ao ligar o computador, somente na bandeja.",
+	"settings.errorHours": "Informe um número inteiro de {min} a {max} horas.",
+	"settings.errorSave":
+		"Não foi possível salvar as configurações neste computador.",
+	"settings.errorAutostart":
+		"Não foi possível alterar a inicialização com o sistema.",
+
+	"list.filterAll": "Todos",
+	"list.filterActive": "Ativos",
+	"list.filterExpired": "Vencidos",
+	"list.filterFailed": "Falhas",
+	"list.empty": "Nenhum item nesta aba.",
+	"list.queued": "Na fila",
+	"list.canceled": "Cancelado",
+	"list.errorFallback": "Erro no envio",
+	"list.generatingLink": "Enviado · gerando link...",
+	"list.fileDeleted": "Arquivo removido do S3",
+	"list.linkExpired": "Link expirado",
+	"list.linkValidUntil": "Link válido até {date}",
+	"list.copied": "copiado",
+	"list.fileDeletedAt": "arquivo apagado ~{date}",
+	"list.actionRegenerate": "Gerar novo link e copiar",
+	"list.actionCopied": "Link copiado",
+	"list.actionCopy": "Copiar link",
+	"list.actionCancel": "Cancelar {name}",
+	"list.actionRemove": "Remover do histórico",
+
+	"history.title": "Histórico",
+	"history.viewAll": "Ver histórico completo ({count})",
+
+	"notify.uploadDone": "Upload concluído",
+	"notify.uploadFailed": "Falha no upload",
+
+	"tray.open": "Abrir",
+	"tray.quit": "Sair",
+	"tray.uploading": "dstorage — enviando ({filled}/{total})",
+
+	"error.partNetwork":
+		"Falha de rede ao enviar parte ao S3 (confira o CORS e a região do bucket)",
+	"error.noEtag": "O S3 não devolveu ETag (veja o CORS do bucket)",
+	"error.fileGone": "O arquivo não existe mais no S3",
+	"error.interrupted": "Envio interrompido ao fechar o app",
+};

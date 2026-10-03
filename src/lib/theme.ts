@@ -4,25 +4,25 @@ import { loadSettings, saveSettings, type Theme } from "./settings";
 const query = window.matchMedia("(prefers-color-scheme: dark)");
 const root = document.documentElement;
 
-/** Liga ou desliga a classe `.dark` na raiz, que o Tailwind e as variáveis do shadcn usam. */
+/** Toggles the `.dark` class on the root, which Tailwind and the shadcn variables use. */
 export function applyTheme(theme: Theme) {
 	const dark = theme === "dark" || (theme === "system" && query.matches);
 	root.classList.toggle("dark", dark);
 }
 
-/** Aplica o tema salvo e, no modo "system", acompanha mudanças do sistema. */
+/** Applies the saved theme and, in "system" mode, follows operating system changes. */
 export function initTheme() {
 	applyTheme(loadSettings().theme);
 	query.addEventListener("change", () => applyTheme(loadSettings().theme));
 }
 
-/** Alterna entre claro e escuro a partir do que está na tela e guarda a escolha. */
+/** Switches between light and dark based on what is on screen, and saves the choice. */
 export function toggleTheme() {
 	const next: Theme = root.classList.contains("dark") ? "light" : "dark";
 	try {
 		saveSettings({ ...loadSettings(), theme: next });
 	} catch {
-		// Sem localStorage o tema vale só até fechar o app.
+		// Without localStorage the theme only lasts until the app closes.
 	}
 	applyTheme(next);
 }
@@ -33,7 +33,7 @@ function subscribe(onChange: () => void) {
 	return () => observer.disconnect();
 }
 
-/** O tema escuro está ativo agora (inclusive quando vem do sistema). */
+/** Whether the dark theme is active right now (including when it comes from the system). */
 export function useIsDark() {
 	return useSyncExternalStore(subscribe, () => root.classList.contains("dark"));
 }
