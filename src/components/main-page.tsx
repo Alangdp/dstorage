@@ -1,10 +1,11 @@
-import { CloudUpload, Moon, Settings, Sun, Upload } from "lucide-react";
+import { CloudUpload, Moon, Settings, Sun, Upload, User } from "lucide-react";
 import { HeaderButton } from "@/components/header-button";
 import { Dropzone, DropzoneEmptyState } from "@/components/kibo-ui/dropzone";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { UploadList } from "@/components/upload-list";
 import { useNow } from "@/hooks/use-now";
+import { useSession } from "@/hooks/use-session";
 import type { UploadItem } from "@/hooks/use-uploads";
 import { useI18n } from "@/i18n";
 import { toggleTheme, useIsDark } from "@/lib/theme";
@@ -24,6 +25,8 @@ type MainPageProps = {
 	onCancel: (id: string) => void;
 	onCopyLink: (id: string) => void;
 	onRemove: (id: string) => void;
+	/** Opens the account screen when signed in, the sign-in screen otherwise. */
+	onOpenAccount: () => void;
 	onOpenSettings: () => void;
 	onOpenHistory: () => void;
 	onClose: () => void;
@@ -36,6 +39,7 @@ export function MainPage({
 	onCancel,
 	onCopyLink,
 	onRemove,
+	onOpenAccount,
 	onOpenSettings,
 	onOpenHistory,
 	onClose,
@@ -43,9 +47,13 @@ export function MainPage({
 	const { t } = useI18n();
 	const now = useNow();
 	const dark = useIsDark();
+	const session = useSession();
 
 	const recent = items.slice(-RECENT_LIMIT).reverse();
 	const themeLabel = dark ? t("header.themeLight") : t("header.themeDark");
+	const accountLabel = session
+		? t("header.account", { name: session.user.email })
+		: t("header.login");
 
 	return (
 		<PageLayout
@@ -61,6 +69,9 @@ export function MainPage({
 				<>
 					<HeaderButton label={themeLabel} onClick={toggleTheme}>
 						{dark ? <Sun /> : <Moon />}
+					</HeaderButton>
+					<HeaderButton label={accountLabel} onClick={onOpenAccount}>
+						<User />
 					</HeaderButton>
 					<HeaderButton label={t("header.settings")} onClick={onOpenSettings}>
 						<Settings />

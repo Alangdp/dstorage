@@ -13,6 +13,20 @@ export const en = {
 	"header.themeLight": "Light theme",
 	"header.themeDark": "Dark theme",
 	"header.settings": "Settings",
+	"header.login": "Sign in",
+	"header.account": "Account ({name})",
+
+	"login.title": "Sign in",
+	"login.email": "Email",
+	"login.password": "Password",
+	"login.submit": "Sign in",
+	"login.submitting": "Signing in...",
+	"login.errorCredentials": "Incorrect email or password.",
+	"login.errorFallback": "Could not sign in.",
+
+	"account.title": "Account",
+	"account.signedInAs": "Signed in as",
+	"account.logout": "Sign out",
 
 	"dropzone.title": "Drop files here",
 	"dropzone.hint": "Upload starts automatically",
@@ -83,6 +97,20 @@ export const pt: Messages = {
 	"header.themeLight": "Tema claro",
 	"header.themeDark": "Tema escuro",
 	"header.settings": "Configurações",
+	"header.login": "Entrar",
+	"header.account": "Conta ({name})",
+
+	"login.title": "Entrar",
+	"login.email": "E-mail",
+	"login.password": "Senha",
+	"login.submit": "Entrar",
+	"login.submitting": "Entrando...",
+	"login.errorCredentials": "E-mail ou senha incorretos.",
+	"login.errorFallback": "Não foi possível entrar.",
+
+	"account.title": "Conta",
+	"account.signedInAs": "Conectado como",
+	"account.logout": "Sair da conta",
 
 	"dropzone.title": "Arraste arquivos aqui",
 	"dropzone.hint": "O envio começa automaticamente",
