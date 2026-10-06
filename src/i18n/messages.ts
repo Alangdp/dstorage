@@ -40,6 +40,8 @@ export const en = {
 	"settings.autostart": "Start with the system",
 	"settings.autostartHint":
 		"Opens dstorage when the computer starts, in the tray only.",
+	"settings.autostartDev":
+		"Unavailable in development builds: they need the dev server running.",
 	"settings.errorHours": "Enter a whole number from {min} to {max} hours.",
 	"settings.errorSave": "Could not save the settings on this computer.",
 	"settings.errorAutostart": "Could not change the start-with-system option.",
@@ -124,6 +126,8 @@ export const pt: Messages = {
 	"settings.autostart": "Iniciar com o sistema",
 	"settings.autostartHint":
 		"Abre o dstorage ao ligar o computador, somente na bandeja.",
+	"settings.autostartDev":
+		"Indisponível em builds de desenvolvimento: elas precisam do servidor de dev rodando.",
 	"settings.errorHours": "Informe um número inteiro de {min} a {max} horas.",
 	"settings.errorSave":
 		"Não foi possível salvar as configurações neste computador.",

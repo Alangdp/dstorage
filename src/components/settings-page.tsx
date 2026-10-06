@@ -31,6 +31,10 @@ const LANGUAGE_OPTIONS: Array<{ value: LanguageSetting; label: MessageKey }> = [
 	{ value: "pt", label: "settings.languagePt" },
 ];
 
+// A dev build registered at login points at target/debug, which opens a console and a
+// blank window because the Vite dev server is not running.
+const AUTOSTART_AVAILABLE = !import.meta.env.DEV;
+
 type SettingsPageProps = {
 	/** Goes back to the main screen without saving. */
 	onBack: () => void;
@@ -82,7 +86,7 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 		}
 
 		try {
-			if (autostart !== (await isEnabled())) {
+			if (AUTOSTART_AVAILABLE && autostart !== (await isEnabled())) {
 				await (autostart ? enable() : disable());
 			}
 		} catch {
@@ -150,12 +154,17 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 					type="checkbox"
 					className="mt-0.5 size-4 accent-primary"
 					checked={autostart}
+					disabled={!AUTOSTART_AVAILABLE}
 					onChange={(e) => setAutostart(e.target.checked)}
 				/>
 				<div className="flex flex-col gap-1">
 					<Label htmlFor="autostart">{t("settings.autostart")}</Label>
 					<p className="text-xs text-muted-foreground">
-						{t("settings.autostartHint")}
+						{t(
+							AUTOSTART_AVAILABLE
+								? "settings.autostartHint"
+								: "settings.autostartDev",
+						)}
 					</p>
 				</div>
 			</section>
