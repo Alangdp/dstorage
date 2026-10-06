@@ -1,6 +1,7 @@
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
+import { ShortcutField } from "@/components/shortcut-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,8 @@ import {
 	MIN_LINK_EXPIRES_HOURS,
 	saveSettings,
 } from "@/lib/settings";
+import { formatAccelerator } from "@/lib/shortcut";
+import { applyGlobalShortcut } from "@/tray/shortcut";
 
 const LANGUAGE_OPTIONS: Array<{ value: LanguageSetting; label: MessageKey }> = [
 	{ value: "system", label: "settings.languageSystem" },
@@ -52,6 +55,9 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 	const [language, setLanguageChoice] = useState<LanguageSetting>(
 		() => loadSettings().language,
 	);
+	const [shortcut, setShortcut] = useState<string | null>(
+		() => loadSettings().globalShortcut,
+	);
 	const [autostart, setAutostart] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -74,13 +80,29 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 			return;
 		}
 
+		const previousShortcut = loadSettings().globalShortcut;
+		try {
+			await applyGlobalShortcut(shortcut);
+		} catch (cause) {
+			console.error(cause);
+			setError(
+				t("settings.errorShortcut", {
+					shortcut: shortcut ? formatAccelerator(shortcut) : "",
+				}),
+			);
+			return;
+		}
+
 		try {
 			saveSettings({
 				...loadSettings(),
 				linkExpiresHours: value,
 				language,
+				globalShortcut: shortcut,
 			});
 		} catch {
+			// Keep what is registered in line with what is saved.
+			await applyGlobalShortcut(previousShortcut).catch(console.error);
 			setError(t("settings.errorSave"));
 			return;
 		}
@@ -146,6 +168,18 @@ export function SettingsPage({ onBack, onClose }: SettingsPageProps) {
 						))}
 					</SelectContent>
 				</Select>
+			</section>
+
+			<section className="flex flex-col gap-1.5">
+				<Label htmlFor="global-shortcut">{t("settings.shortcut")}</Label>
+				<ShortcutField
+					id="global-shortcut"
+					value={shortcut}
+					onChange={setShortcut}
+				/>
+				<p className="text-xs text-muted-foreground">
+					{t("settings.shortcutHint")}
+				</p>
 			</section>
 
 			<section className="flex items-start gap-2">

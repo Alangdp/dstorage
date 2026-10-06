@@ -2,6 +2,7 @@
 // own; server policy (file retention) does not live here.
 
 import type { LanguageSetting } from "@/i18n";
+import { isAccelerator } from "./shortcut";
 
 const STORAGE_KEY = "dstorage.settings.v1";
 
@@ -17,12 +18,18 @@ export type AppSettings = {
 	linkExpiresHours: number;
 	theme: Theme;
 	language: LanguageSetting;
+	/** Accelerator that opens or hides the window from any program, or null when turned off. */
+	globalShortcut: string | null;
 };
+
+/** Combination registered on a fresh install. */
+export const DEFAULT_GLOBAL_SHORTCUT = "CommandOrControl+Shift+U";
 
 const DEFAULTS: AppSettings = {
 	linkExpiresHours: 24,
 	theme: "system",
 	language: "system",
+	globalShortcut: DEFAULT_GLOBAL_SHORTCUT,
 };
 
 /** Whether `hours` is a whole number inside the range the server accepts. */
@@ -55,6 +62,13 @@ export function loadSettings(): AppSettings {
 			language: isLanguageSetting(parsed.language)
 				? parsed.language
 				: DEFAULTS.language,
+			// null is a valid saved value ("off"), so only a missing key gets the default.
+			globalShortcut:
+				parsed.globalShortcut === null
+					? null
+					: isAccelerator(parsed.globalShortcut)
+						? parsed.globalShortcut
+						: DEFAULTS.globalShortcut,
 		};
 	} catch {
 		return DEFAULTS;

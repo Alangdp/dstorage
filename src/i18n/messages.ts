@@ -45,6 +45,14 @@ export const en = {
 	"settings.errorHours": "Enter a whole number from {min} to {max} hours.",
 	"settings.errorSave": "Could not save the settings on this computer.",
 	"settings.errorAutostart": "Could not change the start-with-system option.",
+	"settings.shortcut": "Global shortcut",
+	"settings.shortcutHint":
+		"Opens or hides dstorage from any program. Click the field and press the keys. It may not work on some Linux desktops.",
+	"settings.shortcutPress": "Press the keys…",
+	"settings.shortcutOff": "Off",
+	"settings.shortcutClear": "Turn off",
+	"settings.errorShortcut":
+		"Could not use {shortcut}. Another program may already be using it.",
 
 	"list.filterAll": "All",
 	"list.filterActive": "Active",
@@ -133,6 +141,14 @@ export const pt: Messages = {
 		"Não foi possível salvar as configurações neste computador.",
 	"settings.errorAutostart":
 		"Não foi possível alterar a inicialização com o sistema.",
+	"settings.shortcut": "Atalho global",
+	"settings.shortcutHint":
+		"Abre ou esconde o dstorage a partir de qualquer programa. Clique no campo e pressione as teclas. Pode não funcionar em alguns desktops Linux.",
+	"settings.shortcutPress": "Pressione as teclas…",
+	"settings.shortcutOff": "Desligado",
+	"settings.shortcutClear": "Desligar",
+	"settings.errorShortcut":
+		"Não foi possível usar {shortcut}. Outro programa pode já estar usando essa combinação.",
 
 	"list.filterAll": "Todos",
 	"list.filterActive": "Ativos",

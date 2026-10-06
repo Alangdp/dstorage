@@ -6,6 +6,7 @@ import "./index.css";
 import { loadSettings } from "./lib/settings";
 import { initTheme } from "./lib/theme";
 import { setupTray } from "./tray/setup";
+import { setupGlobalShortcut } from "./tray/shortcut";
 import { setupCloseToTray, setupTrayDropEvents } from "./tray/window";
 
 // The language must be set before anything that builds translated text (tray menu, history).
@@ -14,6 +15,7 @@ initTheme();
 setupTray().catch(console.error);
 setupTrayDropEvents().catch(console.error);
 setupCloseToTray().catch(console.error);
+setupGlobalShortcut().catch(console.error);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 	<React.StrictMode>

@@ -48,12 +48,23 @@ async function positionNearTray(rect: TrayRect) {
 	);
 }
 
+// A keyboard shortcut has no tray rectangle of its own, so it reuses the last one a tray
+// click or a file drag reported. Null until the first of those happens.
+let lastTrayRect: TrayRect | null = null;
+
 /**
  * Hides the main window if it is showing, otherwise shows it next to the tray icon.
  * A tray click takes focus away from the window, so `isFocused` cannot decide this:
  * visible and not minimized => hide; anything else => show and focus.
+ *
+ * Without a `rect` (the global shortcut) it uses the last known one, and opens the window
+ * unpositioned when there is none yet.
  */
-export async function toggleMainWindow(rect: TrayRect) {
+export async function toggleMainWindow(rect?: TrayRect) {
+	if (rect) {
+		lastTrayRect = rect;
+	}
+
 	const win = getCurrentWindow();
 	const [visible, minimized] = await Promise.all([
 		win.isVisible(),
@@ -65,7 +76,11 @@ export async function toggleMainWindow(rect: TrayRect) {
 		return;
 	}
 
-	await showMainWindow(rect);
+	if (lastTrayRect) {
+		await showMainWindow(lastTrayRect);
+	} else {
+		await openMainWindow();
+	}
 }
 
 /** Opens the window wherever it is, without positioning it (there is no tray rectangle, as on Linux). */
@@ -84,6 +99,7 @@ async function showMainWindow(rect: TrayRect) {
 /** Opens the window when the transparent window over the tray icon reports a file dragged onto it. */
 export async function setupTrayDropEvents() {
 	await listen<TrayRect>(TRAY_DRAG_ENTER, async (event) => {
+		lastTrayRect = event.payload;
 		const win = getCurrentWindow();
 		if (await win.isVisible()) {
 			return;

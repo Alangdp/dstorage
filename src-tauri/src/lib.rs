@@ -154,6 +154,11 @@ pub fn run() {
         None,
     ));
 
+    // The shortcut itself is registered from JS (`src/tray/shortcut.ts`), because the
+    // combination is a user setting stored in localStorage.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
+
     builder
         .setup(|app| {
             // Windows only: on macOS and Linux the native tray is enough (and on Linux the
