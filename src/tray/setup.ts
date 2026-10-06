@@ -1,7 +1,8 @@
-import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
+import { exit } from "@tauri-apps/api/app";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
 import { subscribeToLanguage, t } from "@/i18n";
+import { drawTrayIcon, onSystemThemeChange } from "./icon";
 import { openMainWindow, toggleMainWindow } from "./window";
 
 const TRAY_ID = "main-tray";
@@ -48,7 +49,7 @@ export async function setupTray() {
 
 	tray = await TrayIcon.new({
 		id: TRAY_ID,
-		icon: (await defaultWindowIcon()) ?? undefined,
+		icon: (await drawTrayIcon(null)) ?? undefined,
 		menu: await buildMenu(),
 		// Left click toggles the window; the menu stays on the right button.
 		showMenuOnLeftClick: false,
@@ -67,6 +68,12 @@ export async function setupTray() {
 	subscribeToLanguage(() => {
 		void buildMenu()
 			.then((menu) => tray?.setMenu(menu))
+			.catch(console.error);
+	});
+
+	onSystemThemeChange(() => {
+		void drawTrayIcon(null)
+			.then((icon) => (icon ? tray?.setIcon(icon) : undefined))
 			.catch(console.error);
 	});
 }
